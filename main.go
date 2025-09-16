@@ -13,6 +13,7 @@ type apiConfig struct {
 
 func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Closure, needs to run in every request that comes to file server.
 		cfg.fileServerHit.Add(1)
 		next.ServeHTTP(w, r)
 	})
