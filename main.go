@@ -19,7 +19,8 @@ func main() {
 	// static file server
 	mux.Handle("/app/", http.StripPrefix("/app", http.FileServer(http.Dir("."))))
 
-	mux.Handle("/healthz", http.HandlerFunc(healthzHandler))
+	// health check
+	mux.HandleFunc("/healthz", healthzHandler)
 
 	server := &http.Server{
 		Addr:    port,
