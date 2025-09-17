@@ -57,6 +57,8 @@ func main() {
 	// reset
 	mux.HandleFunc("POST /admin/reset", apiCfg.resetHandler)
 
+	mux.HandleFunc("POST /api/validate_chirp", validateChirpHandler)
+
 	// Serve the server
 	server := &http.Server{
 		Addr:    port,
