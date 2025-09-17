@@ -7,18 +7,18 @@ import (
 )
 
 func replaceProfanes(body string) string {
-	profanes := map[string]string{
-		"kerfuffle": "****",
-		"sharbert":  "****",
-		"fornax":    "****",
+	profanes := map[string]struct{}{ // empty struct allocate zero memory
+		"kerfuffle": {},
+		"sharbert":  {},
+		"fornax":    {},
 	}
 
 	splittedOriginal := strings.Split(body, " ")
 	splittedLowered := strings.Split(strings.ToLower(body), " ")
 
 	for i, word := range splittedLowered {
-		if profanes[word] != "" {
-			splittedOriginal[i] = profanes[word]
+		if _, ok := profanes[word]; ok {
+			splittedOriginal[i] = "****"
 		}
 	}
 
