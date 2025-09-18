@@ -16,17 +16,11 @@ import (
 type apiConfig struct {
 	db            *database.Queries
 	fileServerHit atomic.Int32
+	platform      string
 }
 
 func initiateDB() *database.Queries {
-
-	godotenv.Load()
-	dbURL := os.Getenv("DB_URL")
-
-	if dbURL == "" {
-		log.Fatal("DB URL must be set")
-	}
-
+	dbURL := getEnvOrFail("DB_URL")
 	dbConn, err := sql.Open("postgres", dbURL)
 
 	if err != nil {
@@ -34,6 +28,16 @@ func initiateDB() *database.Queries {
 	}
 
 	return database.New(dbConn)
+}
+
+func getEnvOrFail(key string) string {
+	envVal := os.Getenv(key)
+
+	if envVal == "" {
+		log.Fatalf("%s must be set", key)
+	}
+
+	return envVal
 }
 
 func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
@@ -52,11 +56,6 @@ func (cfg *apiConfig) metricHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(res))
 }
 
-func (cfg *apiConfig) resetHandler(w http.ResponseWriter, r *http.Request) {
-	cfg.fileServerHit.Store(0)
-	w.WriteHeader(http.StatusOK)
-}
-
 func healthzHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
@@ -64,13 +63,16 @@ func healthzHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	port := ":8080"
-	mux := http.NewServeMux()
+	godotenv.Load()
 
 	apiCfg := &apiConfig{
 		fileServerHit: atomic.Int32{},
 		db:            initiateDB(),
+		platform:      getEnvOrFail("PLATFORM"),
 	}
+
+	port := ":8080"
+	mux := http.NewServeMux()
 
 	// static file server
 	fileServerHandler := http.StripPrefix("/app", http.FileServer(http.Dir(".")))
@@ -84,9 +86,13 @@ func main() {
 	mux.HandleFunc("GET /admin/metrics", apiCfg.metricHandler)
 
 	// reset
-	mux.HandleFunc("POST /admin/reset", apiCfg.resetHandler)
+	mux.HandleFunc("POST /admin/reset", apiCfg.resetUserHandler)
 
+	// chirps
 	mux.HandleFunc("POST /api/validate_chirp", validateChirpHandler)
+
+	// users
+	mux.HandleFunc("POST /api/users", apiCfg.createUserHandler)
 
 	// Serve the server
 	server := &http.Server{
