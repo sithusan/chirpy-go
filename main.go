@@ -89,7 +89,7 @@ func main() {
 	mux.HandleFunc("POST /admin/reset", apiCfg.resetUserHandler)
 
 	// chirps
-	mux.HandleFunc("POST /api/validate_chirp", validateChirpHandler)
+	mux.HandleFunc("POST /api/chirps", apiCfg.createChirpHandler)
 
 	// users
 	mux.HandleFunc("POST /api/users", apiCfg.createUserHandler)
