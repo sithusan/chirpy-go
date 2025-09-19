@@ -3,29 +3,14 @@ package main
 import (
 	"encoding/json"
 	"net/http"
-	"time"
-
-	"github.com/google/uuid"
 )
 
 func (cfg *apiConfig) createUserHandler(w http.ResponseWriter, r *http.Request) {
-	type parameters struct {
-		Email string `json:"email"`
-	}
-
-	// to control the response. api resource concept. might worth to group the response together.
-	type UserResponse struct {
-		ID        uuid.UUID `json:"id"`
-		CreatedAt time.Time `json:"created_at"`
-		UpdatedAt time.Time `json:"updated_at"`
-		Email     string    `json:"email"`
-	}
-
 	const MIN_EMAIL_LENGH = 10
 	const MAX_EMAIL_LENGTH = 255
 
 	decoder := json.NewDecoder(r.Body)
-	params := parameters{}
+	params := CreateUserRequest{}
 
 	if err := decoder.Decode(&params); err != nil {
 		errorResponse(w, http.StatusInternalServerError, "Could not decode params", err)
@@ -49,7 +34,7 @@ func (cfg *apiConfig) createUserHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	jsonResponse(w, http.StatusCreated, UserResponse{
+	jsonResponse(w, http.StatusCreated, UserResource{
 		ID:        user.ID,
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
